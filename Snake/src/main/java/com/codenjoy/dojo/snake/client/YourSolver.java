@@ -14,10 +14,22 @@ import com.codenjoy.dojo.snake.model.Elements;
  */
 public class YourSolver implements Solver<Board> {
 
-    private static final String USER_NAME = "apofig@gmail.com";
+    private static final String USER_NAME = "maistrenko@pkzp.com.ua";
 
     private Dice dice;
     private Board board;
+    public Elements [] tail = {Elements.TAIL_END_DOWN,
+                               Elements.TAIL_END_UP,
+                               Elements.TAIL_END_LEFT,
+                               Elements.TAIL_END_RIGHT,
+                               Elements.TAIL_HORIZONTAL,
+                               Elements.TAIL_VERTICAL,
+                               Elements.TAIL_LEFT_DOWN,
+                               Elements.TAIL_LEFT_UP,
+                               Elements.TAIL_RIGHT_UP,
+                               Elements.TAIL_RIGHT_DOWN,
+                               Elements.BAD_APPLE
+                               };
 
     public YourSolver(Dice dice) {
         this.dice = dice;
@@ -72,20 +84,19 @@ public class YourSolver implements Solver<Board> {
                 break;
             }
         }
-
         int dx = snakeHeadX - appleX;
         int dy = snakeHeadY - appleY;
 
-        if (dx < 0) {
+        if (dx < 0 && !board.isAt(snakeHeadX+1, snakeHeadY,tail)) {
             return Direction.RIGHT.toString();
         }
-        if (dx > 0) {
+        if (dx > 0 && !board.isAt(snakeHeadX-1, snakeHeadY,tail)) {
             return Direction.LEFT.toString();
         }
-        if (dy < 0) {
+        if (dy < 0 && !board.isAt(snakeHeadX, snakeHeadY+1,tail)) {
             return Direction.DOWN.toString();
         }
-        if (dy > 0) {
+        if (dy > 0 && !board.isAt(snakeHeadX, snakeHeadY-1,tail)) {
             return Direction.UP.toString();
         }
 
