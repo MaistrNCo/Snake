@@ -42,6 +42,7 @@ public class YourSolver implements Solver<Board> {
 //        Point point = board.getApples().get(0);
 //        point.getX()
 //        point.getY()
+        int siZe = board.size();
 
         char[][] field = board.getField();
 
