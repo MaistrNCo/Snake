@@ -22,18 +22,8 @@ public class YourSolver implements Solver<Board> {
 
     private Dice dice;
     private Board board;
-    public Elements [] tail = {Elements.TAIL_END_DOWN,
-                               Elements.TAIL_END_UP,
-                               Elements.TAIL_END_LEFT,
-                               Elements.TAIL_END_RIGHT,
-                               Elements.TAIL_HORIZONTAL,
-                               Elements.TAIL_VERTICAL,
-                               Elements.TAIL_LEFT_DOWN,
-                               Elements.TAIL_LEFT_UP,
-                               Elements.TAIL_RIGHT_UP,
-                               Elements.TAIL_RIGHT_DOWN,
-                               Elements.BAD_APPLE
-                               };
+    private int[][] DexMatrix;
+
 
     public YourSolver(Dice dice) {
         this.dice = dice;
@@ -43,137 +33,168 @@ public class YourSolver implements Solver<Board> {
     public String get(Board board) {
         this.board = board;
 
-        int waveNum=1;
-        boolean arrivedApple = false;
+        DexMatrix = createDexMatrix(board);
+        int [] routeEndPoint  = fillWaves(board, DexMatrix);
+        int [] nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
 
-        int[][] DexMatrix = createDexMatrix(board);
+        int dx = board.getHead().getX() - nextMovePoint[1];
+        int dy = board.getHead().getY() - nextMovePoint[0];
 
-        ArrayList <Integer> currWave = new ArrayList <Integer>();
-        currWave.add(board.getHead().getX());
-        currWave.add(board.getHead().getY());
-        while (!currWave.isEmpty()||!arrivedApple){
-            ArrayList <Integer> newWave = new ArrayList <Integer>();
-
-            for (int indexX =0; indexX < currWave.size(); indexX = indexX +2) {
-                //seekn up, rigth, down, left & set next wave points (waveNum+1)
-                for (int ind = 0; ind < 4; ind++) { //try to continue wave in 4 directions
-                    int x = currWave.get(indexX);
-                    int y = currWave.get(indexX + 1);
-                    switch (ind){
-                        case 0:
-                            x--;
-                            break;
-                        case 1:
-                            y++;
-                            break;
-                        case 2:
-                            x ++;
-                            break;
-                        case 3:
-                            y --;
-                            break;
-                    }
-                    if (x<1||  //check border & "bad"
-                        y<1||
-                        x>board.size()-2||
-                        y>board.size()-2||
-                        DexMatrix[x][y] < 0) {
-                        continue;
-                    }
-                    if(DexMatrix[x][y]==10000){ //apple founded
-                        arrivedApple = true;
-                        break;
-                    }
-                    if(DexMatrix[x][y] ==0){
-                        DexMatrix[x][y] = waveNum;
-                        newWave.add(x);
-                        newWave.add(y);
-                    }
-                }
-//
-            }
-         //   wavesArray.add(newWave);
-            waveNum++;
-            currWave.clear();
-            currWave.addAll(newWave);
-        }
-
-
-        char[][] field = board.getField();
-
-        // found snake
-        int snakeHeadX = -1;
-        int snakeHeadY = -1;
-        for (int x = 0; x < field.length; x++) {
-            for (int y = 0; y < field.length; y++) {
-                char ch = field[x][y];
-                if (ch == Elements.HEAD_DOWN.ch() ||
-                    ch == Elements.HEAD_UP.ch() ||
-                    ch == Elements.HEAD_LEFT.ch() ||
-                    ch == Elements.HEAD_RIGHT.ch())
-                {
-                    snakeHeadX = x;
-                    snakeHeadY = y;
-                    break;
-
-                }
-            }
-            if (snakeHeadX != -1) {
-                break;
-            }
-        }
-
-        // нашли змейку
-        int appleX = -1;
-        int appleY = -1;
-        for (int x = 0; x < field.length; x++) {
-            for (int y = 0; y < field.length; y++) {
-                char ch = field[x][y];
-                if (ch == Elements.GOOD_APPLE.ch()) {
-                    appleX = x;
-                    appleY = y;
-                    break;
-
-                }
-            }
-            if (appleX != -1) {
-                break;
-            }
-        }
-        int dx = snakeHeadX - appleX;
-        int dy = snakeHeadY - appleY;
-
-        if (dx < 0 && !board.isAt(snakeHeadX+1, snakeHeadY,tail)) {
+        if (dx < 0 ) {
             return Direction.RIGHT.toString();
         }
-        if (dx > 0 && !board.isAt(snakeHeadX-1, snakeHeadY,tail)) {
+        if (dx > 0) {
             return Direction.LEFT.toString();
         }
-        if (dy < 0 && !board.isAt(snakeHeadX, snakeHeadY+1,tail)) {
+        if (dy < 0 ) {
             return Direction.DOWN.toString();
         }
-        if (dy > 0 && !board.isAt(snakeHeadX, snakeHeadY-1,tail)) {
+        if (dy > 0 ) {
             return Direction.UP.toString();
         }
 
         return Direction.UP.toString();
     }
 
+    private int[] FindWay(int[][] dexMatrix, int[] endPoint) {
+        boolean foundHead = false;
+        boolean foundNext;
+        int xBase,yBase;
+        int x=0;
+        int y=0;
+
+        //search route from apple
+        while(!foundHead){
+            int ind = 0;
+            foundNext = false;
+            xBase = endPoint[1];
+            yBase = endPoint[0];
+            while (!foundNext){
+                switch (ind){
+                    case 0:
+                        x=xBase-1;
+                        y=yBase;
+                        break;
+                    case 1:
+                        y=yBase+1;
+                        x=xBase;
+                        break;
+                    case 2:
+                        x=xBase+1;
+                        y=yBase;
+                        break;
+                    case 3:
+                        y=yBase-1;
+                        x=xBase;
+                        break;
+                }
+                ind++;
+                if (x<1||  //check border & "bad"
+                    y<1||
+                    x>board.size()-2||
+                    y>board.size()-2){
+                    continue;
+                }
+
+                if(dexMatrix[y][x]==-10000){  //head founded
+                    foundHead = true;
+                    break;
+                }
+                if(dexMatrix[endPoint[0]][endPoint[1]]==1)continue;
+                if(dexMatrix[endPoint[0]][endPoint[1]]- dexMatrix[y][x]==1){ //next point founded
+                    foundNext=true;
+                    endPoint[1]=x;
+                    endPoint[0]=y;
+                }
+                if(ind >4) System.out.println("Something wrong");
+            }
+
+        }
+        return endPoint;
+    }
+
+    private int[] fillWaves(Board board, int[][] dexMatrix) {
+        boolean arrivedApple = false;
+        int[] endPoint = new int[2];
+        int xBase,yBase;
+        int x=0;
+        int y=0;
+        int waveNum=0;
+        ArrayList<Integer> currWave = new ArrayList <>();
+        currWave.add(board.getHead().getY());
+        currWave.add(board.getHead().getX());
+        while (!currWave.isEmpty()&&!arrivedApple){
+            waveNum++;
+            ArrayList <Integer> newWave = new ArrayList <>();
+
+            for (int indexY =0; indexY < currWave.size(); indexY = indexY +2) {
+                //seek up, rigth, down, left & set next wave points (waveNum1)
+                yBase = currWave.get(indexY);
+                xBase = currWave.get(indexY + 1);
+                for (int ind = 0; ind < 4; ind++) { //try to continue wave in 4 directions
+                    switch (ind){
+                        case 0:
+                            y=yBase-1;
+                            x=xBase;
+                            break;
+                        case 1:
+                            x=xBase+1;
+                            y=yBase;
+                            break;
+                        case 2:
+                            y = yBase+1;
+                            x=xBase;
+                            break;
+                        case 3:
+                            x = xBase-1;
+                            y=yBase;
+                            break;
+                    }
+                    endPoint[0] = y;
+                    endPoint[1] = x;
+                    if (x<1||  //check border & "bad"
+                        y<1||
+                        x>board.size()-2||
+                        y>board.size()-2||
+                        dexMatrix[y][x] < 0) {
+                        continue;
+                    }
+                    if(dexMatrix[y][x]==10000){ //apple founded
+                        dexMatrix[y][x]= waveNum;
+                        arrivedApple = true;
+                        break;
+                    }
+                    if(dexMatrix[y][x] ==0){
+                        dexMatrix[y][x] = waveNum;
+                        newWave.add(y);
+                        newWave.add(x);
+                    }
+                }
+                if(arrivedApple) break;
+//
+            }
+            //   wavesArray.add(newWave);
+            currWave.clear();
+            currWave.addAll(newWave);
+        }
+        return endPoint;
+    }
+
     private int[][] createDexMatrix(Board board) {
 
         int [][] DexMatrix  = new int[board.size()][board.size()];
-        DexMatrix[board.getHead().getX()][board.getHead().getY()] = -10000;
         for (Point pApplle:board.getApples()) {
-            DexMatrix[pApplle.getX()][pApplle.getY()] = 10000;
+            DexMatrix[pApplle.getY()][pApplle.getX()] = 10000;
         }
 
         for (Point pStone:board.getStones()) {
-            DexMatrix[pStone.getX()][pStone.getY()] = -1;
+            DexMatrix[pStone.getY()][pStone.getX()] = -1;
         }
 
         for (Point pSnake:board.getSnake()) {
-            DexMatrix[pSnake.getX()][pSnake.getY()] = -1;
+            DexMatrix[pSnake.getY()][pSnake.getX()] = -1;
         }
+        DexMatrix[board.getHead().getY()][board.getHead().getX()] = -10000;
         return DexMatrix;
     }
 

@@ -12,12 +12,21 @@ public class YourSolverTest {
 
     @Test
     public void testSimply() {
-        assertB("☼☼☼☼☼☼" +
-                "☼    ☼" +
-                "☼ ☺  ☼" +
-                "☼    ☼" +
-                "☼ ▲  ☼" +
-                "☼☼☼☼☼☼", "UP");
+        assertB("☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼" +
+                "☼   ╔╗        ☼" +
+                "☼ ☺ ╙║        ☼" +
+                "☼    ║        ☼" +
+                "☼    ║        ☼" +
+                "☼    ║        ☼" +
+                "☼    ║        ☼" +
+                "☼    ╚══╗     ☼" +
+                "☼       ║     ☼" +
+                "☼       ║     ☼" +
+                "☼       ║     ☼" +
+                "☼       ║     ☼" +
+                "☼ ☻     ║     ☼" +
+                "☼       ╚═══► ☼" +
+                "☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼", "UP");
     }
     @Test
     public void testSameDirection() {
