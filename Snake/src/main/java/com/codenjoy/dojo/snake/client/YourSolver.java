@@ -9,6 +9,10 @@ import com.codenjoy.dojo.services.Point;
 import com.codenjoy.dojo.services.RandomDice;
 import com.codenjoy.dojo.snake.model.Elements;
 
+import javax.lang.model.element.Element;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User: your name
  */
@@ -39,10 +43,61 @@ public class YourSolver implements Solver<Board> {
     public String get(Board board) {
         this.board = board;
 
-//        Point point = board.getApples().get(0);
-//        point.getX()
-//        point.getY()
-        int siZe = board.size();
+        int waveNum=1;
+        boolean arrivedApple = false;
+
+        int[][] DexMatrix = createDexMatrix(board);
+
+        ArrayList <Integer> currWave = new ArrayList <Integer>();
+        currWave.add(board.getHead().getX());
+        currWave.add(board.getHead().getY());
+        while (!currWave.isEmpty()||!arrivedApple){
+            ArrayList <Integer> newWave = new ArrayList <Integer>();
+
+            for (int indexX =0; indexX < currWave.size(); indexX = indexX +2) {
+                //seekn up, rigth, down, left & set next wave points (waveNum+1)
+                for (int ind = 0; ind < 4; ind++) { //try to continue wave in 4 directions
+                    int x = currWave.get(indexX);
+                    int y = currWave.get(indexX + 1);
+                    switch (ind){
+                        case 0:
+                            x--;
+                            break;
+                        case 1:
+                            y++;
+                            break;
+                        case 2:
+                            x ++;
+                            break;
+                        case 3:
+                            y --;
+                            break;
+                    }
+                    if (x<1||  //check border & "bad"
+                        y<1||
+                        x>board.size()-2||
+                        y>board.size()-2||
+                        DexMatrix[x][y] < 0) {
+                        continue;
+                    }
+                    if(DexMatrix[x][y]==10000){ //apple founded
+                        arrivedApple = true;
+                        break;
+                    }
+                    if(DexMatrix[x][y] ==0){
+                        DexMatrix[x][y] = waveNum;
+                        newWave.add(x);
+                        newWave.add(y);
+                    }
+                }
+//
+            }
+         //   wavesArray.add(newWave);
+            waveNum++;
+            currWave.clear();
+            currWave.addAll(newWave);
+        }
+
 
         char[][] field = board.getField();
 
@@ -102,6 +157,24 @@ public class YourSolver implements Solver<Board> {
         }
 
         return Direction.UP.toString();
+    }
+
+    private int[][] createDexMatrix(Board board) {
+
+        int [][] DexMatrix  = new int[board.size()][board.size()];
+        DexMatrix[board.getHead().getX()][board.getHead().getY()] = -10000;
+        for (Point pApplle:board.getApples()) {
+            DexMatrix[pApplle.getX()][pApplle.getY()] = 10000;
+        }
+
+        for (Point pStone:board.getStones()) {
+            DexMatrix[pStone.getX()][pStone.getY()] = -1;
+        }
+
+        for (Point pSnake:board.getSnake()) {
+            DexMatrix[pSnake.getX()][pSnake.getY()] = -1;
+        }
+        return DexMatrix;
     }
 
     public static void main(String[] args) {
