@@ -9,6 +9,16 @@ import static org.junit.Assert.assertEquals;
  * Created by oleksandr.baglai on 01.12.2015.
  */
 public class YourSolverTest {
+
+    @Test
+    public void testSimply() {
+        assertB("☼☼☼☼☼☼" +
+                "☼    ☼" +
+                "☼ ☺  ☼" +
+                "☼    ☼" +
+                "☼ ▲  ☼" +
+                "☼☼☼☼☼☼", "UP");
+    }
     @Test
     public void testSameDirection() {
         assertB("☼☼☼☼☼☼" +
