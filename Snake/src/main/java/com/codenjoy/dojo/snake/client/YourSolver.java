@@ -22,16 +22,15 @@ public class YourSolver implements Solver<Board> {
 
     private Dice dice;
     private Board board;
-    private int[][] DexMatrix;
-
-
     public YourSolver(Dice dice) {
         this.dice = dice;
     }
 
+
     @Override
     public String get(Board board) {
         this.board = board;
+        int[][] DexMatrix;
 
         DexMatrix = createDexMatrix(board);
         int [] routeEndPoint  = fillWaves(board, DexMatrix);
@@ -56,6 +55,7 @@ public class YourSolver implements Solver<Board> {
         return Direction.UP.toString();
     }
 
+
     private int[] FindWay(int[][] dexMatrix, int[] endPoint) {
         boolean foundHead = false;
         boolean foundNext;
@@ -72,19 +72,35 @@ public class YourSolver implements Solver<Board> {
             while (!foundNext){
                 switch (ind){
                     case 0:
-                        x=xBase-1;
+                        if(xBase>board.size()/2){
+                            x=xBase+1;
+                        }else{
+                            x=xBase-1;
+                        }
                         y=yBase;
                         break;
                     case 1:
-                        y=yBase+1;
+                        if(yBase>board.size()/2){
+                            y=yBase+1;
+                        }else{
+                            y=yBase-1;
+                        }
                         x=xBase;
                         break;
                     case 2:
-                        x=xBase+1;
+                        if(xBase>board.size()/2){
+                            x=xBase-1;
+                        }else{
+                            x=xBase+1;
+                        }
                         y=yBase;
                         break;
                     case 3:
-                        y=yBase-1;
+                        if(yBase>board.size()/2){
+                            y=yBase-1;
+                        }else{
+                            y=yBase+1;
+                        }
                         x=xBase;
                         break;
                 }
@@ -101,6 +117,7 @@ public class YourSolver implements Solver<Board> {
                     break;
                 }
                 if(dexMatrix[endPoint[0]][endPoint[1]]==1)continue;
+
                 if(dexMatrix[endPoint[0]][endPoint[1]]- dexMatrix[y][x]==1){ //next point founded
                     foundNext=true;
                     endPoint[1]=x;
@@ -114,16 +131,19 @@ public class YourSolver implements Solver<Board> {
     }
 
     private int[] fillWaves(Board board, int[][] dexMatrix) {
-        boolean arrivedApple = false;
+    //    boolean arrivedApple = false;
         int[] endPoint = new int[2];
+        int[] applePoint = new int[2];
+        int[] appleWaves = new int[4];
         int xBase,yBase;
         int x=0;
         int y=0;
+        int reached = 0;
         int waveNum=0;
         ArrayList<Integer> currWave = new ArrayList <>();
         currWave.add(board.getHead().getY());
         currWave.add(board.getHead().getX());
-        while (!currWave.isEmpty()&&!arrivedApple){
+        while (!currWave.isEmpty()){  //&&!arrivedApple
             waveNum++;
             ArrayList <Integer> newWave = new ArrayList <>();
 
@@ -150,8 +170,6 @@ public class YourSolver implements Solver<Board> {
                             y=yBase;
                             break;
                     }
-                    endPoint[0] = y;
-                    endPoint[1] = x;
                     if (x<1||  //check border & "bad"
                         y<1||
                         x>board.size()-2||
@@ -160,24 +178,36 @@ public class YourSolver implements Solver<Board> {
                         continue;
                     }
                     if(dexMatrix[y][x]==10000){ //apple founded
-                        dexMatrix[y][x]= waveNum;
-                        arrivedApple = true;
+                        applePoint[0] = y;
+                        applePoint[1] = x;
+                     //   dexMatrix[y][x]= waveNum;
+                        appleWaves[reached]=waveNum;
+                        reached++;
+                     //   arrivedApple = true;
                         break;
                     }
                     if(dexMatrix[y][x] ==0){
                         dexMatrix[y][x] = waveNum;
+                        endPoint[0] = y;
+                        endPoint[1] = x;
                         newWave.add(y);
                         newWave.add(x);
                     }
                 }
-                if(arrivedApple) break;
+                //if(arrivedApple) break;
 //
             }
             //   wavesArray.add(newWave);
             currWave.clear();
             currWave.addAll(newWave);
         }
-        return endPoint;
+
+        if(reached>0){
+            dexMatrix[applePoint[0]][applePoint[1]] = appleWaves[0];
+            return applePoint;
+        }else{
+            return endPoint;
+        }
     }
 
     private int[][] createDexMatrix(Board board) {
