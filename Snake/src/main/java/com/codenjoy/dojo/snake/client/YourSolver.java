@@ -23,9 +23,11 @@ public class YourSolver implements Solver<Board> {
     private static final String USER_NAME = "maistrenko@pkzp.com.ua";
 
     //PointImpl pointTest = new PointImpl(0,0);
-
+    private ArrayList<ArrayList<Point>> routeVault = new ArrayList();
+    private boolean appleFound;
     private Dice dice;
     private Board board;
+
     public YourSolver(Dice dice) {
         this.dice = dice;
     }
@@ -78,7 +80,12 @@ public class YourSolver implements Solver<Board> {
         int currX = startPoint.getX();
         int currY = startPoint.getY();
         int nextStep = dexMatrix[currY][currX]-1;
-        if (nextStep == 0) return pointList;
+        if (nextStep == 0  //if next step to head
+            ||dexMatrix[currY][currX]== -10000){
+            appleFound = true;
+            return pointList;  //or stand on head (by first step)
+        }
+
         if (dexMatrix[currY-1][currX]==nextStep) pointList.add(new PointImpl(currX,currY-1));
         if (dexMatrix[currY+1][currX]==nextStep) pointList.add(new PointImpl(currX,currY+1));
         if (dexMatrix[currY][currX-1]==nextStep) pointList.add(new PointImpl(currX-1,currY));
@@ -86,10 +93,10 @@ public class YourSolver implements Solver<Board> {
         return pointList;
     }
 
-    private ArrayList GetRoutes(Board board,int[][] dexMatrix,PointImpl startPnt, PointImpl endPnt){
+    private void GetRoutes(Board board,int[][] dexMatrix,PointImpl startPnt, PointImpl endPnt){
         //start point - head
         //end point  -  apple or farthest point
-        ArrayList<ArrayList<PointImpl>> result = new ArrayList();
+        appleFound = false;
         ArrayList <Point> currRoute = new ArrayList<>();
         int currX = endPnt.getX();
         int currY = endPnt.getY();
@@ -98,15 +105,41 @@ public class YourSolver implements Solver<Board> {
         if (dexMatrix[currY+1][currX]>0 ||dexMatrix[currY+1][currX]==-10000) pointList.add(new PointImpl(currX,currY-1));
         if (dexMatrix[currY][currX-1]>0 ||dexMatrix[currY][currX-1]==-10000) pointList.add(new PointImpl(currX,currY-1));
         if (dexMatrix[currY][currX+1]>0 ||dexMatrix[currY][currX+1]==-10000) pointList.add(new PointImpl(currX,currY-1));
+
         //goto next rote`s step (iteratively )
-        getGetRouteNextStep(currRoute, pointList);
+        GetRouteNextStep(currRoute, pointList,dexMatrix);
 
-        currRoute.add(endPnt);
-
-        return result;
     }
 
-    private void getGetRouteNextStep(ArrayList<Point> currRoute, ArrayList<PointImpl> pointList) {
+    private void GetRouteNextStep(ArrayList<Point> currRoute, ArrayList<PointImpl> pointList,int[][] dexMatrix) {
+        for (int ind = pointList.size()-1; ind >=0 ; ind--) {
+            //int indR =routeIndex;
+            if (ind==0){//first point will continue last route
+                currRoute.add(pointList.get(ind));
+                ArrayList <PointImpl> nextStepList = FindeNextPoints(pointList.get(ind),dexMatrix);
+                if (nextStepList.size()>0){
+                    GetRouteNextStep(currRoute,nextStepList,dexMatrix);
+                }else{
+                    //add complete route to ArrayList
+                    routeVault.add(currRoute);
+                    continue;
+                }
+
+            }else{      //create new branch from previous
+                ArrayList Route = new ArrayList();
+                Route.addAll(currRoute);
+                Route.add(pointList.get(ind));
+                ArrayList <PointImpl> nextStepList = FindeNextPoints(pointList.get(ind),dexMatrix);
+                if (nextStepList.size()>0){
+                    GetRouteNextStep(Route,nextStepList,dexMatrix);
+                }else{
+                    //add complete route to ArrayList
+                    routeVault.add(Route);
+                    continue;
+                }
+
+            }
+        }
        // GetRouteNxtStep(currRoute, pointList);
     }
 
