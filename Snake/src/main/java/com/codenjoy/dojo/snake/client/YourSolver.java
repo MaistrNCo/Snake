@@ -6,6 +6,7 @@ import com.codenjoy.dojo.client.Solver;
 import com.codenjoy.dojo.client.WebSocketRunner;
 import com.codenjoy.dojo.services.Dice;
 import com.codenjoy.dojo.services.Point;
+import com.codenjoy.dojo.services.PointImpl;
 import com.codenjoy.dojo.services.RandomDice;
 import com.codenjoy.dojo.snake.model.Elements;
 
@@ -13,12 +14,15 @@ import javax.lang.model.element.Element;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * User: your name
  */
 public class YourSolver implements Solver<Board> {
 
     private static final String USER_NAME = "maistrenko@pkzp.com.ua";
+
+    //PointImpl pointTest = new PointImpl(0,0);
 
     private Dice dice;
     private Board board;
@@ -32,9 +36,23 @@ public class YourSolver implements Solver<Board> {
         this.board = board;
         int[][] DexMatrix;
 
+        //generating matrix of available routes
+
+            //generate waves
         DexMatrix = createDexMatrix(board);
         int [] routeEndPoint  = fillWaves(board, DexMatrix);
+
+            //find paths
         int [] nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
+            //cases:
+                //apple available
+                //not apple
+        // analise of routes
+            //if route to apple
+                //check tail availability after route will  completed
+                //if no - next route
+            //if is not safe route to apple move to farthest point
+
 
         int dx = board.getHead().getX() - nextMovePoint[1];
         int dy = board.getHead().getY() - nextMovePoint[0];
@@ -53,6 +71,43 @@ public class YourSolver implements Solver<Board> {
         }
 
         return Direction.UP.toString();
+    }
+
+    private ArrayList<PointImpl> FindeNextPoints(PointImpl startPoint,int[][] dexMatrix){
+        ArrayList <PointImpl> pointList = new ArrayList<>();
+        int currX = startPoint.getX();
+        int currY = startPoint.getY();
+        int nextStep = dexMatrix[currY][currX]-1;
+        if (nextStep == 0) return pointList;
+        if (dexMatrix[currY-1][currX]==nextStep) pointList.add(new PointImpl(currX,currY-1));
+        if (dexMatrix[currY+1][currX]==nextStep) pointList.add(new PointImpl(currX,currY+1));
+        if (dexMatrix[currY][currX-1]==nextStep) pointList.add(new PointImpl(currX-1,currY));
+        if (dexMatrix[currY][currX+1]==nextStep) pointList.add(new PointImpl(currX+1,currY));
+        return pointList;
+    }
+
+    private ArrayList GetRoutes(Board board,int[][] dexMatrix,PointImpl startPnt, PointImpl endPnt){
+        //start point - head
+        //end point  -  apple or farthest point
+        ArrayList<ArrayList<PointImpl>> result = new ArrayList();
+        ArrayList <Point> currRoute = new ArrayList<>();
+        int currX = endPnt.getX();
+        int currY = endPnt.getY();
+        ArrayList <PointImpl> pointList = new ArrayList<>();
+        if (dexMatrix[currY-1][currX]>0 ||dexMatrix[currY-1][currX]==-10000) pointList.add(new PointImpl(currX,currY-1));
+        if (dexMatrix[currY+1][currX]>0 ||dexMatrix[currY+1][currX]==-10000) pointList.add(new PointImpl(currX,currY-1));
+        if (dexMatrix[currY][currX-1]>0 ||dexMatrix[currY][currX-1]==-10000) pointList.add(new PointImpl(currX,currY-1));
+        if (dexMatrix[currY][currX+1]>0 ||dexMatrix[currY][currX+1]==-10000) pointList.add(new PointImpl(currX,currY-1));
+        //goto next rote`s step (iteratively )
+        getGetRouteNextStep(currRoute, pointList);
+
+        currRoute.add(endPnt);
+
+        return result;
+    }
+
+    private void getGetRouteNextStep(ArrayList<Point> currRoute, ArrayList<PointImpl> pointList) {
+       // GetRouteNxtStep(currRoute, pointList);
     }
 
 
