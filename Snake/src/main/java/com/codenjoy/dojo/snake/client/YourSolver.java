@@ -319,6 +319,9 @@ public class YourSolver implements Solver<Board> {
         for (Point pStone:board.getStones()) {
             DexMatrix[pStone.getY()][pStone.getX()] = -1;
         }
+        for (Point pWalls:board.getWalls()) {
+            DexMatrix[pWalls.getY()][pWalls.getX()] = -1;
+        }
 
         for (Point pSnake:board.getSnake()) {
             DexMatrix[pSnake.getY()][pSnake.getX()] = -1;
