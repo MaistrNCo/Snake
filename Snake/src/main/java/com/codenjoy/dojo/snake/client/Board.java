@@ -66,6 +66,71 @@ public class Board extends AbstractBoard<Elements> {
         result.add(0, getHead());
         return result;
     }
+    public List<Point> getRightSnake(){
+        List<Point> snakeMixed = getSnake();
+        List<Point> snake = new LinkedList<>();
+        Point previousPoint = getHead();
+        snakeMixed.remove(previousPoint);
+        snake.add(previousPoint);
+        int index = 0;
+        while(snakeMixed.size()>0){
+            Point point = snakeMixed.get(index);
+            if(itsNextPoint(previousPoint, point)){
+                snake.add(point);
+                snakeMixed.remove(point);
+                previousPoint = point;
+                index = 0;
+                continue;
+            }
+            index++;
+        }
+        return snake;
+    }
+
+    private boolean itsNextPoint(Point prvPoint, Point point) {
+
+        Elements element = this.getAt(point.getX(), point.getY());
+
+
+            if (point.getX() == prvPoint.getX()){
+                if(point.getY() - 1 == prvPoint.getY()) { //upper fro prev
+                    if(element.equals(Elements.TAIL_END_DOWN)||
+                            element.equals(Elements.TAIL_VERTICAL)||
+                            element.equals(Elements.TAIL_LEFT_UP)||
+                            element.equals(Elements.TAIL_RIGHT_UP)){
+                            return true;
+                    }
+
+                }else if(point.getY() + 1 == prvPoint.getY()){ //down from prev
+                    if(element.equals(Elements.TAIL_END_UP)||
+                       element.equals(Elements.TAIL_VERTICAL)||
+                       element.equals(Elements.TAIL_RIGHT_DOWN)||
+                       element.equals(Elements.TAIL_LEFT_DOWN)){
+                        return true;
+                    }
+                }
+            }
+            if (point.getY() == prvPoint.getY()) {
+                if (point.getX() - 1 == prvPoint.getX()){  //right from prev
+                    if(element.equals(Elements.TAIL_END_RIGHT)||
+                            element.equals(Elements.TAIL_HORIZONTAL)||
+                            element.equals(Elements.TAIL_LEFT_DOWN)||
+                            element.equals(Elements.TAIL_LEFT_UP)){
+                        return true;
+                    }
+                }else if (point.getX() + 1 == prvPoint.getX()){  //left from prev
+                    if(element.equals(Elements.TAIL_END_LEFT)||
+                            element.equals(Elements.TAIL_HORIZONTAL)||
+                            element.equals(Elements.TAIL_RIGHT_DOWN)||
+                            element.equals(Elements.TAIL_RIGHT_UP)){
+                        return true;
+                    }
+
+                }
+            }
+
+        return false;
+    }
 
     @Override
     public String toString() {
