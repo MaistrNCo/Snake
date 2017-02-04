@@ -8,10 +8,9 @@ import com.codenjoy.dojo.services.Dice;
 import com.codenjoy.dojo.services.Point;
 import com.codenjoy.dojo.services.PointImpl;
 import com.codenjoy.dojo.services.RandomDice;
-import com.codenjoy.dojo.snake.model.Elements;
 
-import javax.lang.model.element.Element;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -22,11 +21,17 @@ public class YourSolver implements Solver<Board> {
 
     private static final String USER_NAME = "maistrenko@pkzp.com.ua";
 
+    private static final int APPLE_POINT = 10000;
+    private static final int HEAD_POINT = -10000;
+    private static final int NO_WAY_POINT = -1;
+
     //PointImpl pointTest = new PointImpl(0,0);
-    private ArrayList<ArrayList<Point>> routeVault = new ArrayList();
+    private ArrayList<List<Point>> routeVault = new ArrayList();
     private boolean appleFound;
     private Dice dice;
     private Board board;
+    private int minRouteLength = 100000;
+    private int minRouteIndex;
 
     public YourSolver(Dice dice) {
         this.dice = dice;
@@ -37,17 +42,39 @@ public class YourSolver implements Solver<Board> {
     public String get(Board board) {
         this.board = board;
         int[][] DexMatrix;
+        boolean solved = false;
+        Point nextMovePoint = new PointImpl(0,0);
+        List<Point> snake = board.getRightSnake();
+
 
         //generating matrix of available routes
 
             //generate waves
-        DexMatrix = createDexMatrix(board);
+        DexMatrix = createDexMatrix(snake,board.getHead(),board.getApples());
         int [] routeEndPoint  = fillWaves(board, DexMatrix);
 
             //find paths
-        int [] nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
+     //   nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
 
-        GetRoutes(board,DexMatrix);
+        if (GetRoutes(board.getApples().get(0),DexMatrix)){
+            //move snake by route & check tail
+            for (List <Point> route:routeVault) {
+                List <Point> virtSnake = moveSnake(route,snake);
+                Point fromPoint = virtSnake.get(0);  //head
+                List <Point> toPoint = new LinkedList<>();
+                toPoint.add(virtSnake.get(snake.size()-1)); //tail end
+
+                int[][] virtDexMatrix = createDexMatrix(virtSnake,fromPoint,toPoint);
+                if (GetRoutes(virtSnake.get(snake.size()-1),virtDexMatrix)){
+                    solved = true;
+                    nextMovePoint = route.get(route.size()-1);
+                }
+            }
+
+        }
+        if(!solved){
+            nextMovePoint =  FindWay(DexMatrix, routeEndPoint); //TODO implement search to tail end
+        }
 
             //cases:
                 //apple available
@@ -59,8 +86,8 @@ public class YourSolver implements Solver<Board> {
             //if is not safe route to apple move to farthest point
 
 
-        int dx = board.getHead().getX() - nextMovePoint[1];
-        int dy = board.getHead().getY() - nextMovePoint[0];
+        int dx = board.getHead().getX() - nextMovePoint.getX();
+        int dy = board.getHead().getY() - nextMovePoint.getY();
 
         if (dx < 0 ) {
             return Direction.RIGHT.toString();
@@ -78,84 +105,76 @@ public class YourSolver implements Solver<Board> {
         return Direction.UP.toString();
     }
 
-    private ArrayList<PointImpl> FindeNextPoints(PointImpl startPoint,int[][] dexMatrix){
-        ArrayList <PointImpl> pointList = new ArrayList<>();
+    private List<Point> moveSnake(List<Point> route, List<Point> snake) {
+        List <Point> result =new LinkedList<>();
+        for (int index = 0; index <=snake.size() ; index++) {
+            if(index<route.size()){
+                result.add(route.get(index));
+            }else{
+                result.add(snake.get(index-route.size()));
+            }
+        }
+        return result;
+    }
+
+    private List <Point> FindeNextPoints(Point startPoint,int[][] dexMatrix){
+        List <Point> pointList = new LinkedList<>();
         int currX = startPoint.getX();
         int currY = startPoint.getY();
         int nextStep = dexMatrix[currY][currX]-1;
-        if (nextStep == 0  //if next step to head
-            ||dexMatrix[currY][currX]== -10000){
-            appleFound = true;
-            pointList.add((PointImpl) board.getHead());
-             //or stand on head (by first step)
-        }else {
+        if (dexMatrix[currY - 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY - 1));
+        if (dexMatrix[currY + 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY + 1));
+        if (dexMatrix[currY][currX - 1] == nextStep) pointList.add(new PointImpl(currX - 1, currY));
+        if (dexMatrix[currY][currX + 1] == nextStep) pointList.add(new PointImpl(currX + 1, currY));
 
-            if (dexMatrix[currY - 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY - 1));
-            if (dexMatrix[currY + 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY + 1));
-            if (dexMatrix[currY][currX - 1] == nextStep) pointList.add(new PointImpl(currX - 1, currY));
-            if (dexMatrix[currY][currX + 1] == nextStep) pointList.add(new PointImpl(currX + 1, currY));
-        }
         return pointList;
     }
 
-    private void GetRoutes(Board board,int[][] dexMatrix){
+    private boolean GetRoutes(Point endPnt,int[][] dexMatrix){
         //start point - head
         //end point  -  apple or farthest point
         appleFound = false;
-        Point endPnt = board.getApples().get(0);
-        ArrayList <Point> currRoute = new ArrayList<>();
+        List <Point> currRoute = new LinkedList<>();
         currRoute.add(endPnt);
         int currX = endPnt.getX();
         int currY = endPnt.getY();
-        ArrayList <PointImpl> pointList = new ArrayList<>();
-        if (dexMatrix[currY-1][currX]>0 ||dexMatrix[currY-1][currX]==-10000) pointList.add(new PointImpl(currX,currY-1));
-        if (dexMatrix[currY+1][currX]>0 ||dexMatrix[currY+1][currX]==-10000) pointList.add(new PointImpl(currX,currY+1));
-        if (dexMatrix[currY][currX-1]>0 ||dexMatrix[currY][currX-1]==-10000) pointList.add(new PointImpl(currX-1,currY));
-        if (dexMatrix[currY][currX+1]>0 ||dexMatrix[currY][currX+1]==-10000) pointList.add(new PointImpl(currX+1,currY));
+        if(dexMatrix[currY][currX]==1){
+            routeVault.add(currRoute);
+            appleFound = true;
+            return appleFound;
+        }
+
+        List <Point> pointList = FindeNextPoints(endPnt,dexMatrix);
 
         //goto next rote`s step (iteratively )
         GetRouteNextStep(currRoute, pointList,dexMatrix);
-
+        return appleFound;
     }
 
-    private void GetRouteNextStep(ArrayList<Point> currRoute, ArrayList<PointImpl> pointList,int[][] dexMatrix) {
-        for (int ind = pointList.size()-1; ind >=0 ; ind--) {
-            //int indR =routeIndex;
-            if (ind==0){//first point will continue last route
-                currRoute.add(pointList.get(ind));
-                ArrayList <PointImpl> nextStepList = FindeNextPoints(pointList.get(ind),dexMatrix);
-                if (nextStepList.size()==1
-                        &&board.getHead().equals(nextStepList.get(0))){
-                    routeVault.add(currRoute);
-                    continue;
-                }else if (nextStepList.size()>0){
-                    GetRouteNextStep(currRoute,nextStepList,dexMatrix);
-                }else{
-                    //add complete route to ArrayList
-                    routeVault.add(currRoute);
-                    continue;
-                }
+    private void GetRouteNextStep(List<Point> currRoute, List<Point> pointList,int[][] dexMatrix) {
+        for (Point point : pointList) {
+            List<Point> newRoute = new LinkedList();
+            newRoute.addAll(currRoute);
+            newRoute.add(point);
 
-            }else{      //create new branch from previous
-                ArrayList Route = new ArrayList();
-                Route.addAll(currRoute);
-                Route.add(pointList.get(ind));
-                ArrayList <PointImpl> nextStepList = FindeNextPoints(pointList.get(ind),dexMatrix);
-                if (nextStepList.size()>0){
-                    GetRouteNextStep(Route,nextStepList,dexMatrix);
-                }else{
-                    //add complete route to ArrayList
-                    routeVault.add(Route);
-                    continue;
-                }
-
+            if (dexMatrix[point.getY()][point.getX()] == 1) {
+                appleFound = true;
+                if (newRoute.size() < minRouteLength) minRouteLength = newRoute.size();
+                routeVault.add(newRoute);
+                continue;
             }
+
+            List<Point> nextStepList = FindeNextPoints(point, dexMatrix);
+            if (nextStepList.size() > 0) {
+                GetRouteNextStep(newRoute, nextStepList, dexMatrix);
+            }
+
+
         }
-       // GetRouteNxtStep(currRoute, pointList);
     }
 
 
-    private int[] FindWay(int[][] dexMatrix, int[] endPoint) {
+    private Point FindWay(int[][] dexMatrix, int[] endPoint) {
         boolean foundHead = false;
         boolean foundNext;
         int xBase,yBase;
@@ -211,7 +230,7 @@ public class YourSolver implements Solver<Board> {
                     continue;
                 }
 
-                if(dexMatrix[y][x]==-10000){  //head founded
+                if(dexMatrix[y][x]== HEAD_POINT){  //head founded
                     foundHead = true;
                     break;
                 }
@@ -226,7 +245,7 @@ public class YourSolver implements Solver<Board> {
             }
 
         }
-        return endPoint;
+        return new PointImpl(endPoint[1],endPoint[0]);
     }
 
     private int[] fillWaves(Board board, int[][] dexMatrix) {
@@ -276,7 +295,7 @@ public class YourSolver implements Solver<Board> {
                         dexMatrix[y][x] < 0) {
                         continue;
                     }
-                    if(dexMatrix[y][x]==10000){ //apple founded
+                    if(dexMatrix[y][x]== APPLE_POINT){ //apple founded
                         applePoint[0] = y;
                         applePoint[1] = x;
                      //   dexMatrix[y][x]= waveNum;
@@ -309,24 +328,24 @@ public class YourSolver implements Solver<Board> {
         }
     }
 
-    private int[][] createDexMatrix(Board board) {
+    private int[][] createDexMatrix(List<Point> snake,Point head,List<Point> target) {
 
         int [][] DexMatrix  = new int[board.size()][board.size()];
-        for (Point pApplle:board.getApples()) {
-            DexMatrix[pApplle.getY()][pApplle.getX()] = 10000;
+        for (Point pApplle:target) {
+            DexMatrix[pApplle.getY()][pApplle.getX()] = APPLE_POINT;
         }
 
         for (Point pStone:board.getStones()) {
-            DexMatrix[pStone.getY()][pStone.getX()] = -1;
+            DexMatrix[pStone.getY()][pStone.getX()] = NO_WAY_POINT;
         }
         for (Point pWalls:board.getWalls()) {
-            DexMatrix[pWalls.getY()][pWalls.getX()] = -1;
+            DexMatrix[pWalls.getY()][pWalls.getX()] = NO_WAY_POINT;
         }
 
-        for (Point pSnake:board.getSnake()) {
-            DexMatrix[pSnake.getY()][pSnake.getX()] = -1;
+        for (Point pSnake:snake) {
+            DexMatrix[pSnake.getY()][pSnake.getX()] = NO_WAY_POINT;
         }
-        DexMatrix[board.getHead().getY()][board.getHead().getX()] = -10000;
+        DexMatrix[head.getY()][head.getX()] = HEAD_POINT;
         return DexMatrix;
     }
 
