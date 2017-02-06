@@ -60,8 +60,6 @@ public class YourSolver implements Solver<Board> {
         //debuging= true;
         Point nextMovePoint = new PointImpl(0,0);
         List<Point> snake = board.getRightSnake();
-        List <Point> tailPoint = new LinkedList<>();
-
 
         //generating matrix of available routes
 
@@ -95,17 +93,93 @@ public class YourSolver implements Solver<Board> {
         if (!solved) { //move to tail end
             DexMatrix = createDexMatrix(snake, snake.get(0), snake.get(snake.size()-1));
             if (debuging) print2DMatrix(DexMatrix);
+            Point toPnt;
             if (fillWaves(snake.get(0),snake.get(snake.size()-1), DexMatrix)) {
+                toPnt = snake.get(snake.size()-1);
                 if (debuging) print2DMatrix(DexMatrix);
-                if (GetRoutes(snake.get(snake.size()-1), DexMatrix,false)) {
+            }else{
 
-                    //TODO make this path longest
-                    List <Point> route = routeVault.get(0);
-                    nextMovePoint = route.get(route.size()-1);
+                toPnt = getMax(DexMatrix);
+            }
+            if (GetRoutes(toPnt, DexMatrix,false)) {
+
+                List <Point> route = routeVault.get(0);
+
+                DexMatrix = createDexMatrix(snake, snake.get(0), snake.get(snake.size()-1));
+                getFarthestWay(route,DexMatrix);
+
+                nextMovePoint = route.get(route.size()-1);
+            }
+
+
+
+        }
+        return getDirection(board, nextMovePoint);
+    }
+
+    private Point getMax(int[][] dexMatrix) {
+
+        int maxValue = 0;
+        int pMaxX,pMaxY;
+        pMaxX=pMaxY=1;
+
+        for (int indY = 1; indY< board.size()-1; indY++) {
+            for (int indX = 1; indX< board.size()-1; indX++) {
+                if (dexMatrix[indY][indX]>maxValue){
+                    pMaxX=indX;
+                    pMaxY=indY;
                 }
             }
         }
-        return getDirection(board, nextMovePoint);
+        return new PointImpl(pMaxX,pMaxY);
+    }
+
+    private void getFarthestWay(List<Point> route, int[][] dexMatrix) {
+        for (Point routePoint:route) {
+            dexMatrix[routePoint.getY()][routePoint.getX()]=1;
+        }
+        System.out.print("was "+route.size());
+        int shiftX = 0;
+        int shiftY = 0;
+        Point pShiftOne, pShiftTwo;
+        for (int wayExt = 0; wayExt<4;wayExt++) {
+            int step = 1;
+            switch (wayExt){
+                case 0:  //try to shift right
+                    shiftX = -1;
+                    shiftY = 0;
+                    break;
+                case 1:  //try to shift left
+                    shiftX = 0;
+                    shiftY = -1;
+                    break;
+                case 2:  //try to shift down
+                    shiftX = 1;
+                    shiftY = 0;
+                    break;
+                case 3:  //try to shift up
+                    shiftX = 0;
+                    shiftY = 1;
+                    break;
+            }
+
+            while (step<route.size()) {
+                Point currP = route.get(route.size() - step);
+                Point prevP = route.get(route.size() - step - 1);
+                pShiftOne = new PointImpl(prevP.getX()+shiftX,prevP.getY()+shiftY);
+                pShiftTwo = new PointImpl(currP.getX()+shiftX,currP.getY()+shiftY);
+                if (dexMatrix[pShiftOne.getY()][pShiftOne.getX()]==0&&
+                    dexMatrix[pShiftTwo.getY()][pShiftTwo.getX()]==0){
+                        dexMatrix[pShiftOne.getY()][pShiftOne.getX()]=1;
+                        dexMatrix[pShiftTwo.getY()][pShiftTwo.getX()]=1;
+                        route.add(route.size() - step,pShiftOne);
+                        route.add(route.size() - step,pShiftTwo);
+                }else{
+                    step++;
+                }
+            }
+        }
+        System.out.println("  became: "+route.size());
     }
 
     private String getDirection(Board board, Point nextMovePoint) {
