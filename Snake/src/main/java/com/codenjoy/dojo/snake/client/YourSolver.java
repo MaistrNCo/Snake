@@ -56,6 +56,8 @@ public class YourSolver implements Solver<Board> {
         this.board = board;
         int[][] DexMatrix;
         boolean solved = false;
+        boolean debuging= false;
+        //debuging= true;
         Point nextMovePoint = new PointImpl(0,0);
         List<Point> snake = board.getRightSnake();
         List <Point> tailPoint = new LinkedList<>();
@@ -64,10 +66,10 @@ public class YourSolver implements Solver<Board> {
         //generating matrix of available routes
 
             //generate waves
-        DexMatrix = createDexMatrix(snake,board.getHead(),board.getApples());
-
+        DexMatrix = createDexMatrix(snake,board.getHead(),board.getApples().get(0));
+        if (debuging) print2DMatrix(DexMatrix);
         if(fillWaves(snake.get(0),board.getApples().get(0), DexMatrix)) {
-
+            if (debuging)print2DMatrix(DexMatrix);
             //find paths
             //   nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
 
@@ -76,10 +78,8 @@ public class YourSolver implements Solver<Board> {
                 for (List<Point> route : routeVault) {
                     List<Point> virtSnake = moveSnake(route, snake);
                     Point fromPoint = virtSnake.get(0);  //head
-                    tailPoint.add(virtSnake.get(virtSnake.size() - 1)); //tail end
-
-                    int[][] virtDexMatrix = createDexMatrix(virtSnake, fromPoint, tailPoint);
-                    if(fillWaves(virtSnake.get(0),tailPoint.get(0), virtDexMatrix)) {
+                    int[][] virtDexMatrix = createDexMatrix(virtSnake, fromPoint, virtSnake.get(virtSnake.size() - 1));
+                    if(fillWaves(virtSnake.get(0),virtSnake.get(virtSnake.size() - 1), virtDexMatrix)) {
                         if (GetRoutes(virtSnake.get(virtSnake.size() - 1), virtDexMatrix,true)) {
                             solved = true;
                             nextMovePoint = route.get(route.size() - 1);
@@ -90,15 +90,18 @@ public class YourSolver implements Solver<Board> {
                 }
 
             }
-            if (!solved) { //move to tail end
+        }
 
-                DexMatrix = createDexMatrix(snake, snake.get(0), tailPoint);
-                if (fillWaves(snake.get(0),snake.get(snake.size()-1), DexMatrix)) {
-                    if (GetRoutes(tailPoint.get(0), DexMatrix,false)) {
+        if (!solved) { //move to tail end
+            DexMatrix = createDexMatrix(snake, snake.get(0), snake.get(snake.size()-1));
+            if (debuging) print2DMatrix(DexMatrix);
+            if (fillWaves(snake.get(0),snake.get(snake.size()-1), DexMatrix)) {
+                if (debuging) print2DMatrix(DexMatrix);
+                if (GetRoutes(snake.get(snake.size()-1), DexMatrix,false)) {
 
-                        //TODO make this path longest
-                        nextMovePoint = routeVault.get(0).get(0);
-                    }
+                    //TODO make this path longest
+                    List <Point> route = routeVault.get(0);
+                    nextMovePoint = route.get(route.size()-1);
                 }
             }
         }
@@ -272,7 +275,7 @@ public class YourSolver implements Solver<Board> {
         }
     }
 
-    private int[][] createDexMatrix(List<Point> snake,Point head,List<Point> target) {
+    private int[][] createDexMatrix(List<Point> snake,Point head,Point target) {
 
         int [][] DexMatrix  = new int[board.size()][board.size()];
 
@@ -286,11 +289,23 @@ public class YourSolver implements Solver<Board> {
         for (Point pSnake:snake) {
             DexMatrix[pSnake.getY()][pSnake.getX()] = NO_WAY_POINT;
         }
-        for (Point pApplle:target) {
-            DexMatrix[pApplle.getY()][pApplle.getX()] = APPLE_POINT;
-        }
+
+        DexMatrix[target.getY()][target.getX()] = APPLE_POINT;
         DexMatrix[head.getY()][head.getX()] = HEAD_POINT;
         return DexMatrix;
     }
 
+    private void print2DMatrix(int[][] matrix){
+        for (int[] string:matrix) {
+            for (int value:string) {
+                if(value==HEAD_POINT) System.out.print("  "+'H');
+                else if(value==APPLE_POINT) System.out.print("  "+'A');
+                else if(value>9||value==-1)System.out.print(" "+value);
+                else System.out.print("  "+value);
+
+            }
+            System.out.println("");
+        }
+        System.out.println(" ");
+    }
 }
