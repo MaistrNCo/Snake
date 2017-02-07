@@ -106,7 +106,7 @@ public class YourSolver implements Solver<Board> {
                 List <Point> route = routeVault.get(0);
 
                 DexMatrix = createDexMatrix(snake, snake.get(0), snake.get(snake.size()-1));
-                getFarthestWay(route,DexMatrix);
+                getFarthestWay(route,snake.get(0),DexMatrix);
 
                 nextMovePoint = route.get(route.size()-1);
             }
@@ -125,7 +125,8 @@ public class YourSolver implements Solver<Board> {
 
         for (int indY = 1; indY< board.size()-1; indY++) {
             for (int indX = 1; indX< board.size()-1; indX++) {
-                if (dexMatrix[indY][indX]>maxValue){
+                if (dexMatrix[indY][indX]>maxValue&&
+                        dexMatrix[indY][indX]!=APPLE_POINT){
                     pMaxX=indX;
                     pMaxY=indY;
                 }
@@ -134,7 +135,8 @@ public class YourSolver implements Solver<Board> {
         return new PointImpl(pMaxX,pMaxY);
     }
 
-    private void getFarthestWay(List<Point> route, int[][] dexMatrix) {
+    private void getFarthestWay(List<Point> route, Point snHead, int[][] dexMatrix) {
+        route.add(snHead);
         for (Point routePoint:route) {
             dexMatrix[routePoint.getY()][routePoint.getX()]=1;
         }
@@ -142,28 +144,29 @@ public class YourSolver implements Solver<Board> {
         int shiftX = 0;
         int shiftY = 0;
         Point pShiftOne, pShiftTwo;
-        for (int wayExt = 0; wayExt<4;wayExt++) {
-            int step = 1;
-            switch (wayExt){
-                case 0:  //try to shift right
-                    shiftX = -1;
-                    shiftY = 0;
-                    break;
-                case 1:  //try to shift left
-                    shiftX = 0;
-                    shiftY = -1;
-                    break;
-                case 2:  //try to shift down
-                    shiftX = 1;
-                    shiftY = 0;
-                    break;
-                case 3:  //try to shift up
-                    shiftX = 0;
-                    shiftY = 1;
-                    break;
-            }
+        int step = 1;
 
-            while (step<route.size()) {
+        while (step<route.size()) {
+            for (int wayExt = 0; wayExt<4;wayExt++) {
+                switch (wayExt){
+                    case 0:  //try to shift right
+                        shiftX = -1;
+                        shiftY = 0;
+                        break;
+                    case 1:  //try to shift left
+                        shiftX = 0;
+                        shiftY = 1;
+                        break;
+                    case 2:  //try to shift down
+                        shiftX = 1;
+                        shiftY = 0;
+                        break;
+                    case 3:  //try to shift up
+                        shiftX = 0;
+                        shiftY = -1;
+                        break;
+                }
+
                 Point currP = route.get(route.size() - step);
                 Point prevP = route.get(route.size() - step - 1);
                 pShiftOne = new PointImpl(prevP.getX()+shiftX,prevP.getY()+shiftY);
@@ -174,11 +177,14 @@ public class YourSolver implements Solver<Board> {
                         dexMatrix[pShiftTwo.getY()][pShiftTwo.getX()]=1;
                         route.add(route.size() - step,pShiftOne);
                         route.add(route.size() - step,pShiftTwo);
+                        wayExt = 0; //start from begin for each added  pair
                 }else{
-                    step++;
+                    //simply go to next try
                 }
             }
+            step++;
         }
+        route.remove(snHead);
         System.out.println("  became: "+route.size());
     }
 
@@ -220,9 +226,9 @@ public class YourSolver implements Solver<Board> {
         int currY = startPoint.getY();
         int nextStep = dexMatrix[currY][currX]-1;
         if (dexMatrix[currY - 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY - 1));
+        if (dexMatrix[currY][currX + 1] == nextStep) pointList.add(new PointImpl(currX + 1, currY));
         if (dexMatrix[currY + 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY + 1));
         if (dexMatrix[currY][currX - 1] == nextStep) pointList.add(new PointImpl(currX - 1, currY));
-        if (dexMatrix[currY][currX + 1] == nextStep) pointList.add(new PointImpl(currX + 1, currY));
 
         return pointList;
     }
