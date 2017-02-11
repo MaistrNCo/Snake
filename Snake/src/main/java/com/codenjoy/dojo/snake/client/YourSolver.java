@@ -73,7 +73,7 @@ public class YourSolver implements Solver<Board> {
             //   nextMovePoint =  FindWay(DexMatrix, routeEndPoint);
 
             //List<Point> route = ;
-            if (GetRoute(board.getApples().get(0), DexMatrix, false)) {
+            if (GetRoute(snake,board.getApples().get(0), DexMatrix, false)) {
                 solved = true;
                 nextMovePoint = route.get(route.size()-1);
 
@@ -91,7 +91,7 @@ public class YourSolver implements Solver<Board> {
 
                 toPnt = getMax(DexMatrix);
             }
-            if (GetRoute(toPnt, DexMatrix,false)) {
+            if (GetRoute(snake,toPnt, DexMatrix,true)) {
 
                 //List <Point> route = routeVault.get(0);
 
@@ -117,6 +117,7 @@ public class YourSolver implements Solver<Board> {
             for (int indX = 1; indX< board.size()-1; indX++) {
                 if (dexMatrix[indY][indX]>maxValue&&
                         dexMatrix[indY][indX]!=APPLE_POINT){
+                    maxValue=dexMatrix[indY][indX];
                     pMaxX=indX;
                     pMaxY=indY;
                 }
@@ -198,77 +199,89 @@ public class YourSolver implements Solver<Board> {
         return Direction.UP.toString();
     }
 
-    private List<Point> moveSnake(List<Point> route, List<Point> snake) {
+    private List<Point> moveSnake(List<Point> route, List<Point> snake,boolean test) {
         List <Point> result =new LinkedList<>();
-        for (int index = 0; index <=snake.size() ; index++) {
+        byte correction = 0;
+        if (test) correction = 1;
+        for (int index = 0; index <=snake.size()-correction ; index++) {
             if(index<route.size()){
                 result.add(route.get(index));
             }else{
-                result.add(snake.get(index-route.size()));
+                result.add(snake.get(index-route.size()-correction));
             }
         }
         return result;
     }
 
-    private List <Point> FindeNextPoints(Point startPoint,int[][] dexMatrix){
+    private List <Point> FindeNextPoints(Point startPoint,List <Point> snake, int[][] dexMatrix){
         List <Point> pointList = new LinkedList<>();
-        int currX = startPoint.getX();
-        int currY = startPoint.getY();
-        int nextStep = dexMatrix[currY][currX]-1;
-        if (dexMatrix[currY - 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY - 1));
-        if (dexMatrix[currY][currX + 1] == nextStep) pointList.add(new PointImpl(currX + 1, currY));
-        if (dexMatrix[currY + 1][currX] == nextStep) pointList.add(new PointImpl(currX, currY + 1));
-        if (dexMatrix[currY][currX - 1] == nextStep) pointList.add(new PointImpl(currX - 1, currY));
+        int nextStep = dexMatrix[startPoint.getY()][startPoint.getX()]-1;
+
+        pointList = board.getNextStep(startPoint);
+
+        int index = 0;
+        while ( index < pointList.size()) {
+            Point point = pointList.get(index);
+            if (point.getX()==snake.get(0).getX()&&
+                    point.getY()==snake.get(0).getY()) {
+                index++;
+            }else if(nextStep>0 && dexMatrix[point.getY()][point.getX()] == nextStep){
+                index++;
+            }else{
+                pointList.remove(point);
+            }
+        }
+
 
         return pointList;
     }
 
-    private boolean GetRoute(Point endPnt, int[][] dexMatrix, boolean testOnly){
+    private boolean GetRoute(List <Point > snake,Point endPnt, int[][] dexMatrix, boolean testOnly){
         //start point - head
         //end point  -  apple or farthest point
-        if (!testOnly) routeVault.clear();
+
         List <Point> currRoute = new LinkedList<>();
         currRoute.add(endPnt);
-        int currX = endPnt.getX();
-        int currY = endPnt.getY();
-        if(dexMatrix[currY][currX]==1){
-            if (!testOnly) routeVault.add(currRoute);
-            route = currRoute;
-            return true;
-        }
 
-        List <Point> pointList = FindeNextPoints(endPnt,dexMatrix);
+        List <Point> pointList = FindeNextPoints(endPnt,snake,dexMatrix);
 
         //goto next rote`s step (iteratively )
 
 
-        return GetRouteNextStep(currRoute, pointList,dexMatrix,testOnly);
+        return GetRouteNextStep(snake, currRoute, pointList,dexMatrix,testOnly);
 
     }
 
-    private boolean GetRouteNextStep(List<Point> currRoute, List<Point> pointList,int[][] dexMatrix,boolean test) {
+    private boolean GetRouteNextStep(List <Point> snake, List<Point> currRoute, List<Point> pointList,int[][] dexMatrix,boolean test) {
         boolean result = false;
         for (Point point : pointList) {
             List<Point> newRoute = new LinkedList();
             newRoute.addAll(currRoute);
-            newRoute.add(point);
 
-            if (dexMatrix[point.getY()][point.getX()] == 1) {
+            if (point.getY()==snake.get(0).getY()&& point.getX() == snake.get(0).getX()) {
 
-                if (test) {
+                if (test||snake.size()<4) {
+                    route = newRoute;
                     return true;
                 }
                 /////////////////////
-                List<Point> virtSnake = moveSnake(newRoute, snake);
+                List<Point> virtSnake = moveSnake(newRoute, snake,test);
                 Point fromPoint = virtSnake.get(0);  //head
                 int[][] virtDexMatrix = createDexMatrix(virtSnake, fromPoint, virtSnake.get(virtSnake.size() - 1));
 
-                if(fillWaves(virtSnake.get(0),virtSnake.get(virtSnake.size() - 1), virtDexMatrix)) {
-                    if (GetRoute(virtSnake.get(virtSnake.size() - 1), virtDexMatrix,true)) {
+                if(fillWaves(virtSnake.get(0),virtSnake.get(virtSnake.size() - 1), virtDexMatrix)) { //check snake tail
+                    if (GetRoute(virtSnake,virtSnake.get(virtSnake.size() - 1), virtDexMatrix,true)) {
                         route = newRoute;
                         return true;
                     }else{
-
+                        Point toPnt = getMax(virtDexMatrix);
+                        if (GetRoute(virtSnake,toPnt, virtDexMatrix,true)) {
+                            getFarthestWay(route,virtSnake.get(0),virtDexMatrix);
+                            if (route.size()>snake.size()) {
+                                route = newRoute;
+                                return true;
+                            }
+                        }
                         continue;
                     }
                 }else{
@@ -280,10 +293,12 @@ public class YourSolver implements Solver<Board> {
 
             }
 
-            List<Point> nextStepList = FindeNextPoints(point, dexMatrix);
+            newRoute.add(point);
+
+            List<Point> nextStepList = FindeNextPoints(point, snake, dexMatrix);
 
             if (nextStepList.size() > 0) {
-                result = GetRouteNextStep(newRoute, nextStepList, dexMatrix,test);
+                result = GetRouteNextStep(snake,newRoute, nextStepList, dexMatrix,test);
 
             }
             if (result) return true;
@@ -317,15 +332,15 @@ public class YourSolver implements Solver<Board> {
                             y=yBase-1;
                             x=xBase;
                             break;
-                        case 1:
+                        case 2:
                             x=xBase+1;
                             y=yBase;
                             break;
-                        case 2:
+                        case 3:
                             y = yBase+1;
                             x=xBase;
                             break;
-                        case 3:
+                        case 1:
                             x = xBase-1;
                             y=yBase;
                             break;

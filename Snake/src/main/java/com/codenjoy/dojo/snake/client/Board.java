@@ -2,6 +2,7 @@ package com.codenjoy.dojo.snake.client;
 
 import com.codenjoy.dojo.client.*;
 import com.codenjoy.dojo.services.Point;
+import com.codenjoy.dojo.services.PointImpl;
 import com.codenjoy.dojo.snake.model.Elements;
 
 import java.util.*;
@@ -154,5 +155,15 @@ public class Board extends AbstractBoard<Elements> {
 
     public List<Point> getWalls() {
         return get(Elements.BREAK);
+    }
+
+    public List<Point> getNextStep(Point startPoint) {
+        List <Point> resList = new LinkedList<>();
+        resList.add(new PointImpl(startPoint.getX(),startPoint.getY()+1));
+        resList.add(new PointImpl(startPoint.getX()-1,startPoint.getY()));
+        resList.add(new PointImpl(startPoint.getX()+1,startPoint.getY()));
+        resList.add(new PointImpl(startPoint.getX(),startPoint.getY()-1));
+
+        return resList;
     }
 }
