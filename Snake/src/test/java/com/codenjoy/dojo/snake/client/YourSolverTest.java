@@ -135,7 +135,7 @@ public class YourSolverTest {
                             "☼║║╔╗╔╝╚══╗╚═╝☼" +
                             "☼║║║╚╝╔╗╔╗╚══╗☼" +
                             "☼╚╝╚══╝╚╝╚═══╝☼" +
-                            "☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼", "UP");
+                            "☼☼☼☼☼☼☼☼☼☼☼☼☼☼☼", "LEFT");
     }
     @Test
     public void testSimply7() {

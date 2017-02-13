@@ -158,11 +158,11 @@ public class Board extends AbstractBoard<Elements> {
     }
 
     public List<Point> getNextStep(Point startPoint) {
-        List <Point> resList = new LinkedList<>();
-        resList.add(new PointImpl(startPoint.getX(),startPoint.getY()+1));
-        resList.add(new PointImpl(startPoint.getX()-1,startPoint.getY()));
-        resList.add(new PointImpl(startPoint.getX()+1,startPoint.getY()));
-        resList.add(new PointImpl(startPoint.getX(),startPoint.getY()-1));
+        List <Point> resList = new LinkedList<>();  //generating points to 4 direction & checking borders
+        if (startPoint.getY() +1 < this.size()-1) resList.add(new PointImpl(startPoint.getX(),startPoint.getY()+1));
+        if (startPoint.getX()-1 > 0) resList.add(new PointImpl(startPoint.getX()-1,startPoint.getY()));
+        if (startPoint.getX() +1 < this.size()-1)resList.add(new PointImpl(startPoint.getX()+1,startPoint.getY()));
+        if (startPoint.getY()-1 > 0)resList.add(new PointImpl(startPoint.getX(),startPoint.getY()-1));
 
         return resList;
     }
